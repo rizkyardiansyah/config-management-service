@@ -14,6 +14,20 @@ func TestCreateAccessTokenAndParse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if token == "" {
-		t.Fatalf("expected non-empty token")
+		t.Fatalf("unexpected empty token")
+	}
+}
+
+func TestCreateRefreshTokenUnique(t *testing.T) {
+	token1, err := createRefreshToken()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	token2, err := createRefreshToken()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if token1 == token2 {
+		t.Fatal("refresh token is not unique")
 	}
 }
