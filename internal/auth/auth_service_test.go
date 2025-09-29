@@ -51,3 +51,15 @@ func TestAuthService_Login_InvalidPassword(t *testing.T) {
 		t.Fatal("expected error for invalid password")
 	}
 }
+
+func TestAuthService_Login_UserNotFound(t *testing.T) {
+	fakeCfg := &config.Config{AccessTokenTTLInMinutes: 1}
+	fakeSecrets := &secrets.Secrets{JWTsecret: []byte("testsecret")}
+
+	svc := NewAuthService(&mockUserRepo{user: nil}, fakeCfg, fakeSecrets)
+
+	_, _, err := svc.Login("missing", "correct-password")
+	if err == nil || err.Error() != "invalid credentials" {
+		t.Fatalf("expected 'invalid credentials' error, got %v", err)
+	}
+}
