@@ -20,4 +20,5 @@ type User struct {
 	Role         Role `gorm:"size:20;default:'user'"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	IsActive     int
 }
