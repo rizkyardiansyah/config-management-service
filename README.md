@@ -17,6 +17,7 @@ Complete instructions for setting up and running your application.
     - brew install sqlite (to query in terminal)
     - makefile
     - brew install golangci-lint
+    - go install github.com/cosmtrek/air@v1.29.0 for hot reload
 
 ## How to Run this Service
     1. make db-reset

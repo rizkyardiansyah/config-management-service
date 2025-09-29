@@ -11,7 +11,7 @@ build:
 	go build -o bin/$(APP_NAME) ./cmd/server
 
 run:
-	CONFIG_PATH=config/config.json go run ./cmd/server
+	CONFIG_PATH=config/config.json air -c .air.toml
 
 coverage:
 	@pkgs="$$(go list ./internal/... | grep -v -E 'internal/(config|secrets|models|migrations)')"; \
