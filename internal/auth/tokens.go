@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -12,18 +11,11 @@ import (
 	"sass.com/configsvc/internal/secrets"
 )
 
-func createAccessToken(u models.User) (string, error) {
-	config, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal("Failed to load config: ", err)
-	}
-
-	secrets := secrets.LoadSecrets()
-
+func createAccessToken(u models.User, cfg *config.Config, secrets *secrets.Secrets) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":  u.ID,
 		"role": string(u.Role),
-		"exp":  time.Now().Add(time.Duration(config.AccessTokenTTLInMinutes)).Unix(),
+		"exp":  time.Now().Add(time.Minute * time.Duration(cfg.AccessTokenTTLInMinutes)).Unix(),
 		"iat":  time.Now().Unix(),
 	}
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

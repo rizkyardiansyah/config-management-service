@@ -23,3 +23,10 @@ Complete instructions for setting up and running your application.
 
 ## TODO
     - gitignore data/config.db? just re-seed anytime starting run service?
+    - go version in go mode increased itself to 1.23 please set 1.21++
+
+## Integration Test
+- LOGIN SUCCESS
+curl -X POST http://localhost:8089/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
+- LOGIN FAILED
+curl -X POST http://localhost:8089/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"

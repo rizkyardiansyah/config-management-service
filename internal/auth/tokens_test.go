@@ -4,12 +4,18 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"sass.com/configsvc/internal/config"
 	"sass.com/configsvc/internal/models"
+	"sass.com/configsvc/internal/secrets"
 )
 
 func TestCreateAccessTokenAndParse(t *testing.T) {
 	u := models.User{ID: uuid.New(), Role: models.RoleUser}
-	token, err := createAccessToken(u)
+
+	fakeCfg := &config.Config{AccessTokenTTLInMinutes: 1}
+	fakeSecrets := &secrets.Secrets{JWTsecret: []byte("testsecret")}
+
+	token, err := createAccessToken(u, fakeCfg, fakeSecrets)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -3,7 +3,8 @@ package auth
 import (
 	"errors"
 
-	"sass.com/configsvc/internal/models"
+	"sass.com/configsvc/internal/config"
+	"sass.com/configsvc/internal/secrets"
 )
 
 type AuthService interface {
@@ -12,15 +13,16 @@ type AuthService interface {
 
 type AuthServiceImpl struct {
 	userRepo UserRepository
+	cfg      *config.Config
+	secrets  *secrets.Secrets
 }
 
-type UserRepository interface {
-	FindByUsername(username string) (*models.User, error)
-	VerifyPassword(u *models.User, password string) bool
-}
-
-func NewAuthService(userRepo UserRepository) AuthService {
-	return &AuthServiceImpl{userRepo: userRepo}
+func NewAuthService(userRepo UserRepository, cfg *config.Config, secrets *secrets.Secrets) AuthService {
+	return &AuthServiceImpl{
+		userRepo: userRepo,
+		cfg:      cfg,
+		secrets:  secrets,
+	}
 }
 
 // Login verifies user and returns access + refresh tokens
@@ -33,7 +35,7 @@ func (s *AuthServiceImpl) Login(username, password string) (string, string, erro
 		return "", "", errors.New("invalid credentials")
 	}
 
-	access, err := createAccessToken(*u)
+	access, err := createAccessToken(*u, s.cfg, s.secrets)
 	if err != nil {
 		return "", "", err
 	}

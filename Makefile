@@ -11,11 +11,11 @@ build:
 	go build -o bin/$(APP_NAME) ./cmd/server
 
 run:
-	go run ./cmd/server
+	CONFIG_PATH=config/config.json go run ./cmd/server
 
 coverage:
 	@pkgs="$$(go list ./internal/... | grep -v -E 'internal/(config|secrets|models|migrations)')"; \
-	go test -cover -coverprofile=coverage.out $$pkgs
+	go test -coverpkg=$$pkgs -coverprofile=coverage.out $$pkgs
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Opening coverage.html in your browser to view the report.."
 	open coverage.html

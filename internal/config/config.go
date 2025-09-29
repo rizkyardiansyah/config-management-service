@@ -12,7 +12,11 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	file, err := os.Open("../../config/config.json")
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		path = "config/config.json"
+	}
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
