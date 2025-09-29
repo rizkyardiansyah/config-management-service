@@ -226,7 +226,7 @@ func TestConfigDataRepo_GetByName(t *testing.T) {
 	_ = repo.Create(cfg1)
 	_ = repo.Create(cfg2)
 
-	latest, err := repo.GetByName("feature_flag")
+	latest, err := repo.GetLastVersionByName("feature_flag")
 	if err != nil {
 		t.Fatalf("failed to get config by name: %v", err)
 	}
@@ -239,7 +239,7 @@ func TestConfigDataRepo_GetByName_NotFound(t *testing.T) {
 	db := setupConfigTestDB(t)
 	repo := NewConfigRepo(db)
 
-	_, err := repo.GetByName("does_not_exist")
+	_, err := repo.GetLastVersionByName("does_not_exist")
 	if err == nil {
 		t.Fatal("expected error for missing config, got nil")
 	}

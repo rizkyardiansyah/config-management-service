@@ -8,7 +8,7 @@ type ConfigService interface {
 	Create(cfg *models.Configurations) error
 	Update(cfg *models.Configurations) error
 	RollbackConfig(cfg *models.Configurations) error
-	GetByName(name string) (*models.Configurations, error)
+	GetLastVersionByName(name string) (*models.Configurations, error)
 	GetByNameByVersion(name string, version int) (*models.Configurations, error)
 	GetConfigVersions(name string) ([]models.Configurations, error)
 }
@@ -20,7 +20,7 @@ type ConfigServiceImpl struct {
 type ConfigRepository interface {
 	Create(cfg *models.Configurations) error
 	Update(cfg *models.Configurations) error
-	GetByName(name string) (*models.Configurations, error)
+	GetLastVersionByName(name string) (*models.Configurations, error)
 	GetByNameByVersion(name string, version int) (*models.Configurations, error)
 	GetConfigVersions(name string) ([]models.Configurations, error)
 }
@@ -41,8 +41,8 @@ func (s *ConfigServiceImpl) RollbackConfig(cfg *models.Configurations) error {
 	return s.repo.Create(cfg)
 }
 
-func (s *ConfigServiceImpl) GetByName(name string) (*models.Configurations, error) {
-	return s.repo.GetByName(name)
+func (s *ConfigServiceImpl) GetLastVersionByName(name string) (*models.Configurations, error) {
+	return s.repo.GetLastVersionByName(name)
 }
 
 func (s *ConfigServiceImpl) GetByNameByVersion(name string, version int) (*models.Configurations, error) {

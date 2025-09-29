@@ -26,7 +26,7 @@ func (m *mockConfigRepo) Create(cfg *models.Configurations) error {
 func (m *mockConfigRepo) Update(cfg *models.Configurations) error {
 	return m.updateErr
 }
-func (m *mockConfigRepo) GetByName(name string) (*models.Configurations, error) {
+func (m *mockConfigRepo) GetLastVersionByName(name string) (*models.Configurations, error) {
 	return m.getByNameCfg, m.getByNameErr
 }
 func (m *mockConfigRepo) GetByNameByVersion(name string, version int) (*models.Configurations, error) {
@@ -87,7 +87,7 @@ func TestConfigService_GetByName_Success(t *testing.T) {
 	mockRepo := &mockConfigRepo{getByNameCfg: expected}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
-	cfg, err := svc.GetByName("feature_flag")
+	cfg, err := svc.GetLastVersionByName("feature_flag")
 	if err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
@@ -100,7 +100,7 @@ func TestConfigService_GetByName_Error(t *testing.T) {
 	mockRepo := &mockConfigRepo{getByNameErr: errors.New("not found")}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
-	_, err := svc.GetByName("missing")
+	_, err := svc.GetLastVersionByName("missing")
 	if err == nil || err.Error() != "not found" {
 		t.Fatalf("expected 'not found', got %v", err)
 	}

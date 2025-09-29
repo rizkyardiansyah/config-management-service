@@ -32,3 +32,16 @@ Complete instructions for setting up and running your application.
 curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
 - LOGIN FAILED
 curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"
+- CREATE CONFIG
+  curl -X POST http://localhost:8089/api/v1/configs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkxODc0MjEsImlhdCI6MTc1OTE4NjUyMSwicm9sZSI6ImFkbWluIiwic3ViIjoiOTA2YjBmZTctN2E3ZS00ZDg4LTk5ZWEtZjAyNzg0ODI3MTJjIn0.SYIjXB6lc_2UHGir65V49czkRTt1cNn" \
+  -d '{
+    "name": "BCA_VA_DAILY_TRESHOLD",
+    "type": "object",
+    "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"max_limit\": { \"type\": \"integer\" },\n    \"enabled\": { \"type\": \"boolean\" }\n  },\n  \"required\": [\"max_limit\", \"enabled\"]\n}",
+    "input": "{\n  \"max_limit\": 100000,\n  \"enabled\": true\n}",
+    "version": 1
+  }'
+
+

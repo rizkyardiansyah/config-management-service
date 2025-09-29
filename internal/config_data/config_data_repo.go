@@ -24,7 +24,7 @@ func (r *ConfigRepo) Update(cfg *models.Configurations) error {
 }
 
 // Get latest version of a config by name
-func (r *ConfigRepo) GetByName(name string) (*models.Configurations, error) {
+func (r *ConfigRepo) GetLastVersionByName(name string) (*models.Configurations, error) {
 	var cfg models.Configurations
 	if err := r.db.Where("name = ?", name).
 		Order("version DESC").
