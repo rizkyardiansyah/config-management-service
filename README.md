@@ -14,8 +14,9 @@ Complete instructions for setting up and running your application.
   solutions beyond the listed requirements.
 
 ## Pre-requisite
-    - go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+    - brew install sqlite (to query in terminal)
     - makefile
+    - brew install golangci-lint
 
 ## How to Run this Service
     1. make db-reset
@@ -27,6 +28,6 @@ Complete instructions for setting up and running your application.
 
 ## Integration Test
 - LOGIN SUCCESS
-curl -X POST http://localhost:8089/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:8089/api/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
 - LOGIN FAILED
-curl -X POST http://localhost:8089/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:8089/api/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"

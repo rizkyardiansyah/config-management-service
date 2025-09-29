@@ -17,7 +17,7 @@ func main() {
 
 	if *reset {
 		if err := os.Remove(dbPath); err == nil {
-			log.Println("🗑️  removed old DB file")
+			log.Println("removed old DB file")
 		}
 	}
 

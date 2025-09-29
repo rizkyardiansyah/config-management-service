@@ -35,6 +35,7 @@ func main() {
 
 	// Setup routes
 	r := gin.Default()
+	r.SetTrustedProxies(nil) // disables trusting any proxy
 	r.POST("api/login", func(c *gin.Context) {
 		authHandler.Login(c.Writer, c.Request)
 	})

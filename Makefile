@@ -3,7 +3,7 @@ DB_URL=sqlite3://./data/config.db
 MIGRATE_CMD=migrate
 MIGRATIONS_DIR=./migrations
 
-.PHONY: all build run test lint clean
+.PHONY: all build run coverage tidy db-migrate db-migrate-seed db-reset sqlite-shell test lint
 
 all: build
 
@@ -34,3 +34,13 @@ db-migrate-seed:
 # nuke db + fresh schema + seeds
 db-reset:
 	go run cmd/migrate/main.go --reset --seed
+
+# SQL-like shell in terminal
+sqlite-shell:
+	sqlite3 ./data/config.db
+
+test:
+	go test -v ./internal/...
+	
+lint:
+	golangci-lint run ./...
