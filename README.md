@@ -13,6 +13,10 @@ Complete instructions for setting up and running your application.
   • Feel free to include ideas for improvements, additional features, or creative
   solutions beyond the listed requirements.
 
+## Pre-requisite
+    - go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+    - makefile
+
 ## How to Run this Service
-    1. Install Makefile. Give details
-    2. dsds
+    1. make db-reset
+    2. make run

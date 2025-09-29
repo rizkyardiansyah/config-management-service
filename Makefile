@@ -1,4 +1,7 @@
 APP_NAME=configsvc
+DB_URL=sqlite3://./data/config.db
+MIGRATE_CMD=migrate
+MIGRATIONS_DIR=./migrations
 
 .PHONY: all build run test lint clean
 
@@ -18,3 +21,15 @@ coverage:
 
 tidy:
 	go mod tidy
+
+# schema only
+db-migrate:
+	go run cmd/migrate/main.go
+
+# schema + insert users
+db-migrate-seed:
+	go run cmd/migrate/main.go --seed
+
+# nuke db + fresh schema + seeds
+db-reset:
+	go run cmd/migrate/main.go --reset --seed
