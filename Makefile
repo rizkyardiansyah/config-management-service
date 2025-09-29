@@ -14,7 +14,8 @@ run:
 	go run ./cmd/server
 
 coverage:
-	go test ./... -coverprofile=coverage.out
+	@pkgs="$$(go list ./internal/... | grep -v -E 'internal/(config|secrets|models|migrations)')"; \
+	go test -cover -coverprofile=coverage.out $$pkgs
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Opening coverage.html in your browser to view the report.."
 	open coverage.html

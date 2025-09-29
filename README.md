@@ -20,3 +20,6 @@ Complete instructions for setting up and running your application.
 ## How to Run this Service
     1. make db-reset
     2. make run
+
+## TODO
+    - gitignore data/config.db? just re-seed anytime starting run service?
