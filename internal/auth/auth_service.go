@@ -39,6 +39,8 @@ func (s *AuthServiceImpl) Login(username, password string) (string, string, erro
 	if err != nil {
 		return "", "", err
 	}
+
+	// To simplify, we don't store refresh token and its expiration time to Sqlite
 	refresh, err := createRefreshToken()
 	if err != nil {
 		return "", "", err

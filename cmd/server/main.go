@@ -36,9 +36,15 @@ func main() {
 	// Setup routes
 	r := gin.Default()
 	r.SetTrustedProxies(nil) // disables trusting any proxy
-	r.POST("api/login", func(c *gin.Context) {
+	r.POST("api/v1/login", func(c *gin.Context) {
 		authHandler.Login(c.Writer, c.Request)
 	})
+
+	// JWT-protected routes
+	r.Use(auth.AuthMiddleware(secs))
+	r.Use(auth.AuthMiddleware(secs))
+
+	// TODO: Add config data Endpoints here..
 
 	// Run server using port from config
 	addr := fmt.Sprintf(":%d", cfg.Port)

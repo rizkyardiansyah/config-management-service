@@ -29,6 +29,6 @@ Complete instructions for setting up and running your application.
 
 ## Integration Test
 - LOGIN SUCCESS
-curl -X POST http://localhost:8089/api/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
 - LOGIN FAILED
-curl -X POST http://localhost:8089/api/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"
