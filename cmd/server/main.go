@@ -57,7 +57,7 @@ func main() {
 	{
 		api.POST("/configs", configHandler.CreateConfig)
 		api.PUT("/configs/:name", configHandler.UpdateConfig)
-		api.POST("/configs/:id/rollback", configHandler.RollbackConfig)
+		api.POST("/configs/:name/rollback/:version", configHandler.RollbackConfig)
 		api.GET("/configs/:name/latest", configHandler.GetLastVersionByName)
 		api.GET("/configs/:name/versions/:version", configHandler.GetConfigByNameByVersion)
 		api.GET("/configs/:name/versions", configHandler.GetConfigVersions)

@@ -285,3 +285,131 @@ func TestConfigHandler_UpdateConfig_SchemaChanged(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Result().StatusCode)
 	}
 }
+
+func TestConfigHandler_RollbackConfig_AdminSuccess(t *testing.T) {
+	svc := &mockConfigService{
+		byVerCfg: &models.Configurations{
+			Name:    "feature_flag",
+			Schema:  `{"type":"object","properties":{"enabled":{"type":"boolean"}},"required":["enabled"]}`,
+			Input:   `{"enabled":true}`,
+			Version: 1,
+		},
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", func(c *gin.Context) {
+		c.Set("role", "admin")
+		c.Set("user_id", "tester")
+		h.RollbackConfig(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", w.Result().StatusCode)
+	}
+}
+
+func TestConfigHandler_RollbackConfig_UserUnauthorized(t *testing.T) {
+	svc := &mockConfigService{
+		byVerCfg: &models.Configurations{Name: "feature_flag", Version: 1},
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", func(c *gin.Context) {
+		c.Set("role", "user") // not admin
+		c.Set("user_id", "tester")
+		h.RollbackConfig(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Result().StatusCode)
+	}
+}
+
+func TestConfigHandler_RollbackConfig_VersionNotFound(t *testing.T) {
+	svc := &mockConfigService{
+		byVerErr: errors.New("not found"),
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", func(c *gin.Context) {
+		c.Set("role", "admin")
+		c.Set("user_id", "tester")
+		h.RollbackConfig(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/99", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Result().StatusCode)
+	}
+}
+
+func TestConfigHandler_RollbackConfig_RoleNotSet(t *testing.T) {
+	svc := &mockConfigService{
+		byVerCfg: &models.Configurations{Name: "feature_flag", Version: 1},
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", h.RollbackConfig)
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Result().StatusCode)
+	}
+}
+
+func TestConfigHandler_RollbackConfig_UserNotFound(t *testing.T) {
+	svc := &mockConfigService{
+		byVerCfg: &models.Configurations{Name: "feature_flag", Version: 1},
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", func(c *gin.Context) {
+		c.Set("role", "admin")
+		// no user_id set
+		h.RollbackConfig(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Result().StatusCode)
+	}
+}
+
+func TestConfigHandler_RollbackConfig_ServiceError(t *testing.T) {
+	svc := &mockConfigService{
+		byVerCfg:  &models.Configurations{Name: "feature_flag", Version: 1},
+		createErr: errors.New("db error"),
+	}
+	h := NewConfigHandler(svc)
+	r := setupGin()
+	r.POST("/configs/:name/rollback/:version", func(c *gin.Context) {
+		c.Set("role", "admin")
+		c.Set("user_id", "tester")
+		h.RollbackConfig(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/configs/feature_flag/rollback/1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Result().StatusCode)
+	}
+}

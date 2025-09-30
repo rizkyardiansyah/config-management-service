@@ -167,23 +167,61 @@ func (h *ConfigHandler) UpdateConfig(c *gin.Context) {
 }
 
 func (h *ConfigHandler) RollbackConfig(c *gin.Context) {
-	idParam := c.Param("id")
-	_, err := uuid.Parse(idParam)
+	name := c.Param("name")
+	versionStr := c.Param("version")
+	version, err := strconv.Atoi(versionStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid version"})
 		return
 	}
 
-	var cfg models.Configurations
-	if err := c.ShouldBindJSON(&cfg); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+	// Only Admin is allowed to rollback config
+	roleVal, exists := c.Get("role")
+	if !exists {
+		// key not set
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "role not found"})
+		return
+	}
+	role, ok := roleVal.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid role type"})
+		return
+	}
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not authorized"})
 		return
 	}
 
-	if err := h.service.RollbackConfig(&cfg); err != nil {
+	// Enforce user id validation
+	userIdVal, exists := c.Get("user_id")
+	if !exists {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+	userId, ok := userIdVal.(string)
+	if !ok {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Get target version
+	cfg, err := h.service.GetByNameByVersion(name, version)
+	if err != nil || cfg == nil {
+		fmt.Println("Service failed to get target version")
+		c.JSON(http.StatusNotFound, gin.H{"error": "config version not found"})
+		return
+	}
+
+	cfg.CreatedBy = userId
+
+	if err := h.service.Create(cfg); err != nil {
+		fmt.Println("failed to rollback config")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to rollback config"})
 		return
 	}
+
 	c.JSON(http.StatusCreated, cfg)
 }
 

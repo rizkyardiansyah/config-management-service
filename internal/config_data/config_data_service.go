@@ -75,7 +75,10 @@ func (s *ConfigServiceImpl) GetLastVersionByName(name string) (*models.LastConfi
 	}
 
 	// If not available in cache, failover to DB
-	dbData, _ := s.repo.GetLastConfig(name)
+	dbData, err := s.repo.GetLastConfig(name)
+	if err != nil {
+		return nil, err
+	}
 
 	if dbData != nil {
 		// Push db data to cache
