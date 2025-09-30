@@ -92,26 +92,78 @@ func (h *ConfigHandler) CreateConfig(c *gin.Context) {
 }
 
 func (h *ConfigHandler) UpdateConfig(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := uuid.Parse(idParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
-	var cfg models.Configurations
-	if err := c.ShouldBindJSON(&cfg); err != nil {
+	var updatedCfg models.Configurations
+	if err := c.ShouldBindJSON(&updatedCfg); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	cfg.ID = id
+	// Reject invalid input and schema pair
+	if !isValidInput(updatedCfg.Schema, updatedCfg.Input) {
+		fmt.Println("Invalid schema input pair")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
 
-	if err := h.service.Update(&cfg); err != nil {
+	// Only Admin is allowed to update config
+	roleVal, exists := c.Get("role")
+	if !exists {
+		// key not set
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "role not found"})
+		return
+	}
+	role, ok := roleVal.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid role type"})
+		return
+	}
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not authorized"})
+		return
+	}
+
+	// Enforce user id validation
+	userIdVal, exists := c.Get("user_id")
+	if !exists {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+	_, ok = userIdVal.(string)
+	if !ok {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+
+	lastCfg, err := h.service.GetLastVersionByName(name)
+	if err != nil {
+		fmt.Println("failed to get last version")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	// Reject if the update using different schema
+	if !equalSchemas(lastCfg.Schema, updatedCfg.Schema) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "schema cannot be modified"})
+		return
+	}
+
+	updatedCfg.Name = name
+	updatedCfg.IsActive = 1
+
+	if err := h.service.Create(&updatedCfg); err != nil {
+		fmt.Println("service failed to update config")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update config"})
 		return
 	}
-	c.JSON(http.StatusOK, cfg)
+	c.JSON(http.StatusCreated, updatedCfg)
 }
 
 func (h *ConfigHandler) RollbackConfig(c *gin.Context) {

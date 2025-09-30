@@ -18,11 +18,25 @@ type Configurations struct {
 	ClientID  string
 	Name      string `gorm:"size:100;uniqueIndex:idx_name_version"`
 	Type      Type
+	Schema    string    `gorm:"type:TEXT;check:json_valid(schema)"`
+	Input     string    `gorm:"type:TEXT;check:json_valid(input)"`
+	Version   int       `gorm:"uniqueIndex:idx_name_version"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedBy string
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	IsActive  int
+}
+
+type LastConfigurations struct {
+	ID        uuid.UUID `gorm:"primarykey"`
+	ClientID  string
+	Name      string `gorm:"size:100;uniqueIndex:idx_name"`
+	Type      Type
 	Schema    string `gorm:"type:TEXT;check:json_valid(schema)"`
 	Input     string `gorm:"type:TEXT;check:json_valid(input)"`
-	Version   int    `gorm:"uniqueIndex:idx_name_version"`
-	CreatedAt time.Time
+	Version   int
+	CreatedAt time.Time `gorm:"autoCreateTime"`
 	CreatedBy string
-	UpdatedAt time.Time
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 	IsActive  int
 }

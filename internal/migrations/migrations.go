@@ -34,6 +34,9 @@ func RunMigrations(dbPath string, withSeed bool) error {
 	if err := db.AutoMigrate(&models.Configurations{}); err != nil {
 		return fmt.Errorf("failed to migrate Configurations schema: %w", err)
 	}
+	if err := db.AutoMigrate(&models.LastConfigurations{}); err != nil {
+		return fmt.Errorf("failed to migrate LastConfigurations schema: %w", err)
+	}
 	fmt.Println("all schemas migrated")
 
 	if withSeed {

@@ -3,6 +3,7 @@ package configdata
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -30,4 +31,18 @@ func isValidInput(schemaJSONString, inputJSONString string) bool {
 	}
 
 	return true
+}
+
+// Validates two schemas properties is the same and ignore the order
+func equalSchemas(a, b string) bool {
+	var ma, mb map[string]interface{}
+
+	if err := json.Unmarshal([]byte(a), &ma); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(b), &mb); err != nil {
+		return false
+	}
+
+	return reflect.DeepEqual(ma, mb)
 }

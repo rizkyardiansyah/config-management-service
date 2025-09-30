@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"sass.com/configsvc/internal/auth"
+	"sass.com/configsvc/internal/cache"
 	"sass.com/configsvc/internal/config"
 	configdata "sass.com/configsvc/internal/config_data"
 	"sass.com/configsvc/internal/secrets"
@@ -28,6 +29,9 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to connect database:", err)
 	}
+
+	// Setup Cache "Redis"
+	cache.Init()
 
 	// Wire repo, service, handler
 	userRepo := auth.NewUserRepo(db)
@@ -52,7 +56,7 @@ func main() {
 	api.Use(auth.AuthMiddleware(secs))
 	{
 		api.POST("/configs", configHandler.CreateConfig)
-		api.PUT("/configs/:id", configHandler.UpdateConfig)
+		api.PUT("/configs/:name", configHandler.UpdateConfig)
 		api.POST("/configs/:id/rollback", configHandler.RollbackConfig)
 		api.GET("/configs/:name/latest", configHandler.GetLastVersionByName)
 		api.GET("/configs/:name/versions/:version", configHandler.GetConfigByNameByVersion)

@@ -15,10 +15,27 @@ func setupConfigTestDB(t *testing.T) *gorm.DB {
 	if err != nil {
 		t.Fatalf("failed to open sqlite in-memory: %v", err)
 	}
-	if err := db.AutoMigrate(&models.Configurations{}); err != nil {
+	// migrate both history and last snapshot tables so repo.Create(..., last) works
+	if err := db.AutoMigrate(&models.Configurations{}, &models.LastConfigurations{}); err != nil {
 		t.Fatalf("failed to migrate schema: %v", err)
 	}
 	return db
+}
+
+func makeLastFromCfg(cfg *models.Configurations) *models.LastConfigurations {
+	return &models.LastConfigurations{
+		ID:        uuid.New(),
+		ClientID:  cfg.ClientID,
+		Name:      cfg.Name,
+		Type:      cfg.Type,
+		Schema:    cfg.Schema,
+		Input:     cfg.Input,
+		Version:   cfg.Version,
+		CreatedAt: cfg.CreatedAt,
+		CreatedBy: cfg.CreatedBy,
+		UpdatedAt: cfg.UpdatedAt,
+		IsActive:  cfg.IsActive,
+	}
 }
 
 func TestConfigDataRepo_CreateMultipleProperties_Success(t *testing.T) {
@@ -57,7 +74,8 @@ func TestConfigDataRepo_CreateMultipleProperties_Success(t *testing.T) {
 		IsActive:  1,
 	}
 
-	if err := repo.Create(cfg); err != nil {
+	// create last snapshot from cfg and pass to Create
+	if err := repo.Create(cfg, makeLastFromCfg(cfg)); err != nil {
 		t.Fatalf("failed to create config: %v", err)
 	}
 }
@@ -96,7 +114,7 @@ func TestConfigDataRepo_CreateSingleProperty_Success(t *testing.T) {
 		IsActive:  1,
 	}
 
-	if err := repo.Create(cfg); err != nil {
+	if err := repo.Create(cfg, makeLastFromCfg(cfg)); err != nil {
 		t.Fatalf("failed to create config: %v", err)
 	}
 }
@@ -171,7 +189,7 @@ func TestConfigDataRepo_Update_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 		IsActive:  1,
 	}
-	if err := repo.Create(cfg); err != nil {
+	if err := repo.Create(cfg, makeLastFromCfg(cfg)); err != nil {
 		t.Fatalf("failed to create config: %v", err)
 	}
 
@@ -223,10 +241,10 @@ func TestConfigDataRepo_GetByName(t *testing.T) {
 
 	cfg1 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 1, Schema: schemaJSON, Input: inputV1}
 	cfg2 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 2, Schema: schemaJSON, Input: inputV2}
-	_ = repo.Create(cfg1)
-	_ = repo.Create(cfg2)
+	_ = repo.Create(cfg1, makeLastFromCfg(cfg1))
+	_ = repo.Create(cfg2, makeLastFromCfg(cfg2))
 
-	latest, err := repo.GetLastVersionByName("feature_flag")
+	latest, err := repo.GetLastConfig("feature_flag")
 	if err != nil {
 		t.Fatalf("failed to get config by name: %v", err)
 	}
@@ -239,7 +257,7 @@ func TestConfigDataRepo_GetByName_NotFound(t *testing.T) {
 	db := setupConfigTestDB(t)
 	repo := NewConfigRepo(db)
 
-	_, err := repo.GetLastVersionByName("does_not_exist")
+	_, err := repo.GetLastConfig("does_not_exist")
 	if err == nil {
 		t.Fatal("expected error for missing config, got nil")
 	}
@@ -271,8 +289,8 @@ func TestConfigDataRepo_GetByNameByVersion(t *testing.T) {
 
 	cfg1 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 1, Schema: schemaJSON, Input: inputV1}
 	cfg2 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 2, Schema: schemaJSON, Input: inputV2}
-	_ = repo.Create(cfg1)
-	_ = repo.Create(cfg2)
+	_ = repo.Create(cfg1, makeLastFromCfg(cfg1))
+	_ = repo.Create(cfg2, makeLastFromCfg(cfg2))
 
 	v1, err := repo.GetByNameByVersion("feature_flag", 1)
 	if err != nil {
@@ -324,9 +342,9 @@ func TestConfigDataRepo_GetConfigVersions(t *testing.T) {
 	cfg1 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 1, Schema: schemaJSON, Input: inputV1}
 	cfg2 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 2, Schema: schemaJSON, Input: inputV2}
 	cfg3 := &models.Configurations{ID: uuid.New(), Name: "feature_flag", Version: 3, Schema: schemaJSON, Input: inputV3}
-	_ = repo.Create(cfg1)
-	_ = repo.Create(cfg2)
-	_ = repo.Create(cfg3)
+	_ = repo.Create(cfg1, makeLastFromCfg(cfg1))
+	_ = repo.Create(cfg2, makeLastFromCfg(cfg2))
+	_ = repo.Create(cfg3, makeLastFromCfg(cfg3))
 
 	list, err := repo.GetConfigVersions("feature_flag")
 	if err != nil {

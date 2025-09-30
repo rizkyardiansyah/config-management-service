@@ -77,3 +77,45 @@ func TestIsValidInput_InvalidJSON(t *testing.T) {
 		t.Fatal("expected validation to fail for invalid JSON, but it passed")
 	}
 }
+
+func TestEqualSchemas_SameFormatting(t *testing.T) {
+	a := `{"type":"object","properties":{"enabled":{"type":"boolean"}},"required":["enabled"]}`
+	b := `{"type":"object","properties":{"enabled":{"type":"boolean"}},"required":["enabled"]}`
+
+	if !equalSchemas(a, b) {
+		t.Fatal("expected schemas to be equal")
+	}
+}
+
+func TestEqualSchemas_DifferentFormatting(t *testing.T) {
+	a := `{
+		"type": "object",
+		"properties": {
+			"enabled": { "type": "boolean" }
+		},
+		"required": ["enabled"]
+	}`
+	b := `{"required":["enabled"],"properties":{"enabled":{"type":"boolean"}},"type":"object"}`
+
+	if !equalSchemas(a, b) {
+		t.Fatal("expected schemas to be equal despite formatting differences")
+	}
+}
+
+func TestEqualSchemas_DifferentSchema(t *testing.T) {
+	a := `{"type":"object","properties":{"enabled":{"type":"boolean"}},"required":["enabled"]}`
+	b := `{"type":"object","properties":{"max_limit":{"type":"integer"}},"required":["max_limit"]}`
+
+	if equalSchemas(a, b) {
+		t.Fatal("expected schemas to be different")
+	}
+}
+
+func TestEqualSchemas_InvalidJSON(t *testing.T) {
+	a := `{"type":"object"`
+	b := `{"type":"object"}`
+
+	if equalSchemas(a, b) {
+		t.Fatal("expected invalid JSON not to be equal")
+	}
+}

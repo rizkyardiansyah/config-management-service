@@ -2,38 +2,46 @@ package configdata
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"sass.com/configsvc/internal/cache"
 	"sass.com/configsvc/internal/models"
 )
 
-type mockConfigRepo struct {
-	createErr    error
-	updateErr    error
-	getByNameCfg *models.Configurations
-	getByNameErr error
-	getByVerCfg  *models.Configurations
-	getByVerErr  error
-	getVersCfgs  []models.Configurations
-	getVersErr   error
+// Ensure global cache is initialized before run test.
+func TestMain(m *testing.M) {
+	cache.Init()
+	os.Exit(m.Run())
 }
 
-func (m *mockConfigRepo) Create(cfg *models.Configurations) error {
+type mockConfigRepo struct {
+	createErr   error
+	updateErr   error
+	lastCfg     *models.LastConfigurations
+	lastErr     error
+	byVerCfg    *models.Configurations
+	byVerErr    error
+	versions    []models.Configurations
+	versionsErr error
+}
+
+func (m *mockConfigRepo) Create(cfg *models.Configurations, last *models.LastConfigurations) error {
 	return m.createErr
 }
 func (m *mockConfigRepo) Update(cfg *models.Configurations) error {
 	return m.updateErr
 }
-func (m *mockConfigRepo) GetLastVersionByName(name string) (*models.Configurations, error) {
-	return m.getByNameCfg, m.getByNameErr
+func (m *mockConfigRepo) GetLastConfig(name string) (*models.LastConfigurations, error) {
+	return m.lastCfg, m.lastErr
 }
 func (m *mockConfigRepo) GetByNameByVersion(name string, version int) (*models.Configurations, error) {
-	return m.getByVerCfg, m.getByVerErr
+	return m.byVerCfg, m.byVerErr
 }
 func (m *mockConfigRepo) GetConfigVersions(name string) ([]models.Configurations, error) {
-	return m.getVersCfgs, m.getVersErr
+	return m.versions, m.versionsErr
 }
 
 func TestConfigService_Create_Success(t *testing.T) {
@@ -83,21 +91,21 @@ func TestConfigService_RollbackConfig(t *testing.T) {
 }
 
 func TestConfigService_GetByName_Success(t *testing.T) {
-	expected := &models.Configurations{Name: "feature_flag", Version: 2}
-	mockRepo := &mockConfigRepo{getByNameCfg: expected}
+	expected := &models.LastConfigurations{Name: "feature_flag", Version: 1}
+	mockRepo := &mockConfigRepo{lastCfg: expected}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	cfg, err := svc.GetLastVersionByName("feature_flag")
 	if err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
-	if cfg.Version != 2 {
-		t.Errorf("expected version 2, got %d", cfg.Version)
+	if cfg.Version != 1 {
+		t.Errorf("expected version 1, got %d", cfg.Version)
 	}
 }
 
 func TestConfigService_GetByName_Error(t *testing.T) {
-	mockRepo := &mockConfigRepo{getByNameErr: errors.New("not found")}
+	mockRepo := &mockConfigRepo{lastErr: errors.New("not found")}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	_, err := svc.GetLastVersionByName("missing")
@@ -108,7 +116,7 @@ func TestConfigService_GetByName_Error(t *testing.T) {
 
 func TestConfigService_GetByNameByVersion_Success(t *testing.T) {
 	expected := &models.Configurations{Name: "feature_flag", Version: 1}
-	mockRepo := &mockConfigRepo{getByVerCfg: expected}
+	mockRepo := &mockConfigRepo{byVerCfg: expected}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	cfg, err := svc.GetByNameByVersion("feature_flag", 1)
@@ -121,7 +129,7 @@ func TestConfigService_GetByNameByVersion_Success(t *testing.T) {
 }
 
 func TestConfigService_GetByNameByVersion_Error(t *testing.T) {
-	mockRepo := &mockConfigRepo{getByVerErr: errors.New("not found")}
+	mockRepo := &mockConfigRepo{byVerErr: errors.New("not found")}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	_, err := svc.GetByNameByVersion("feature_flag", 99)
@@ -135,7 +143,7 @@ func TestConfigService_GetConfigVersions_Success(t *testing.T) {
 		{Name: "feature_flag", Version: 1},
 		{Name: "feature_flag", Version: 2},
 	}
-	mockRepo := &mockConfigRepo{getVersCfgs: expected}
+	mockRepo := &mockConfigRepo{versions: expected}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	cfgs, err := svc.GetConfigVersions("feature_flag")
@@ -148,7 +156,7 @@ func TestConfigService_GetConfigVersions_Success(t *testing.T) {
 }
 
 func TestConfigService_GetConfigVersions_Error(t *testing.T) {
-	mockRepo := &mockConfigRepo{getVersErr: errors.New("db error")}
+	mockRepo := &mockConfigRepo{versionsErr: errors.New("db error")}
 	svc := &ConfigServiceImpl{repo: mockRepo}
 
 	_, err := svc.GetConfigVersions("feature_flag")

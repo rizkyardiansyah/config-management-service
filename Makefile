@@ -28,9 +28,9 @@ db-migrate:
 db-migrate-seed:
 	go run cmd/migrate/main.go --seed
 
-# nuke db + fresh schema + seeds
+# nuke db + fresh schema
 db-reset:
-	go run cmd/migrate/main.go --reset --seed
+	go run cmd/migrate/main.go --reset
 
 # SQL-like shell in terminal
 sqlite-shell:
