@@ -24,7 +24,7 @@ func (m *mockUserRepo) VerifyPassword(u *models.User, password string) bool {
 func TestAuthService_Login_Success(t *testing.T) {
 	user := &models.User{ID: uuid.New(), Username: "elon", Role: models.RoleUser}
 
-	fakeCfg := &config.Config{AccessTokenTTLInMinutes: 1}
+	fakeCfg := &config.Config{AccessTokenTTLInDays: 1}
 	fakeSecrets := &secrets.Secrets{JWTsecret: []byte("testsecret")}
 
 	svc := NewAuthService(&mockUserRepo{user: user}, fakeCfg, fakeSecrets)
@@ -41,7 +41,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_InvalidPassword(t *testing.T) {
 	user := &models.User{ID: uuid.New(), Username: "elon", Role: models.RoleUser}
 
-	fakeCfg := &config.Config{AccessTokenTTLInMinutes: 1}
+	fakeCfg := &config.Config{AccessTokenTTLInDays: 1}
 	fakeSecrets := &secrets.Secrets{JWTsecret: []byte("testsecret")}
 
 	svc := NewAuthService(&mockUserRepo{user: user}, fakeCfg, fakeSecrets)
@@ -49,5 +49,17 @@ func TestAuthService_Login_InvalidPassword(t *testing.T) {
 	_, _, err := svc.Login("elon", "wrong-password")
 	if err == nil {
 		t.Fatal("expected error for invalid password")
+	}
+}
+
+func TestAuthService_Login_UserNotFound(t *testing.T) {
+	fakeCfg := &config.Config{AccessTokenTTLInDays: 1}
+	fakeSecrets := &secrets.Secrets{JWTsecret: []byte("testsecret")}
+
+	svc := NewAuthService(&mockUserRepo{user: nil}, fakeCfg, fakeSecrets)
+
+	_, _, err := svc.Login("missing", "correct-password")
+	if err == nil || err.Error() != "invalid credentials" {
+		t.Fatalf("expected 'invalid credentials' error, got %v", err)
 	}
 }

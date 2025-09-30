@@ -28,7 +28,12 @@ Complete instructions for setting up and running your application.
     - go version in go mode increased itself to 1.23 please set 1.21++
 
 ## Integration Test
-- LOGIN SUCCESS
-curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"admin123"}' -H "Content-Type: application/json"
-- LOGIN FAILED
-curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","password":"wrongpass"}' -H "Content-Type: application/json"
+    Move to POSTMAN Collections
+
+## Automation Test
+    newman run configs_collection.json
+    sample: newman run tests/postman/configs_collection.json -e tests/postman/local_env.json
+
+## Testing Report
+    https://docs.google.com/spreadsheets/d/1oLkdPhoGm4MNiT8zLft-PdEUo_Nd9qfsib7AN9Srqgw/edit?gid=0#gid=0 
+

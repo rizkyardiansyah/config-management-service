@@ -8,9 +8,11 @@
 *.so
 *.dylib
 
-# go build
+# go build and runtime
 bin/
 obj/
+tmp/
+data/
 *.test
 
 # Code coverage profiles and other test artifacts
@@ -30,5 +32,11 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
+.idea/
 .vscode/
+
+# sqlite
+*.sqlite
+
+# temp mod to remind last stable version with go 1.21
+stable_go.mod

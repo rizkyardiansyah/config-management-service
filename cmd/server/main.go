@@ -8,7 +8,9 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"sass.com/configsvc/internal/auth"
+	"sass.com/configsvc/internal/cache"
 	"sass.com/configsvc/internal/config"
+	configdata "sass.com/configsvc/internal/config_data"
 	"sass.com/configsvc/internal/secrets"
 )
 
@@ -28,23 +30,38 @@ func main() {
 		log.Fatal("failed to connect database:", err)
 	}
 
+	// Setup Cache "Redis"
+	cache.Init()
+
 	// Wire repo, service, handler
 	userRepo := auth.NewUserRepo(db)
 	authService := auth.NewAuthService(userRepo, cfg, secs)
 	authHandler := auth.NewAuthHandler(authService)
+	configRepo := configdata.NewConfigRepo(db)
+	configService := configdata.NewConfigService(configRepo)
+	configHandler := configdata.NewConfigHandler(configService)
 
 	// Setup routes
 	r := gin.Default()
 	r.SetTrustedProxies(nil) // disables trusting any proxy
-	r.POST("api/v1/login", func(c *gin.Context) {
+
+	// Public routes
+	r.POST("/api/v1/login", func(c *gin.Context) {
 		authHandler.Login(c.Writer, c.Request)
 	})
 
 	// JWT-protected routes
-	r.Use(auth.AuthMiddleware(secs))
-	r.Use(auth.AuthMiddleware(secs))
-
-	// TODO: Add config data Endpoints here..
+	// Protected group
+	api := r.Group("/api/v1")
+	api.Use(auth.AuthMiddleware(secs))
+	{
+		api.POST("/configs", configHandler.CreateConfig)
+		api.PUT("/configs/:name", configHandler.UpdateConfig)
+		api.POST("/configs/:name/rollback/:version", configHandler.RollbackConfig)
+		api.GET("/configs/:name/latest", configHandler.GetLastVersionByName)
+		api.GET("/configs/:name/versions/:version", configHandler.GetConfigByNameByVersion)
+		api.GET("/configs/:name/versions", configHandler.GetConfigVersions)
+	}
 
 	// Run server using port from config
 	addr := fmt.Sprintf(":%d", cfg.Port)

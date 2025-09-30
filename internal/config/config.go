@@ -7,7 +7,7 @@ import (
 
 type Config struct {
 	Port                     int
-	AccessTokenTTLInMinutes  int
+	AccessTokenTTLInDays     int
 	RefreshTokenTTLInMinutes int
 }
 

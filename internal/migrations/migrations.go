@@ -3,30 +3,13 @@ package migrations
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"sass.com/configsvc/internal/models"
 )
-
-// --- Models ---
-type Role string
-
-const (
-	RoleAdmin Role = "admin"
-	RoleUser  Role = "user"
-)
-
-type User struct {
-	ID           uuid.UUID `gorm:"primarykey"`
-	Username     string    `gorm:"uniqueIndex;size:100"`
-	PasswordHash string
-	Role         Role `gorm:"size:20;default:'user'"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
 
 // --- Helpers ---
 func hashPassword(pw string) string {
@@ -45,10 +28,16 @@ func RunMigrations(dbPath string, withSeed bool) error {
 	}
 
 	// AutoMigrate creates/updates schema
-	if err := db.AutoMigrate(&User{}); err != nil {
-		return fmt.Errorf("failed to migrate schema: %w", err)
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		return fmt.Errorf("failed to migrate User schema: %w", err)
 	}
-	fmt.Println("schema migrated")
+	if err := db.AutoMigrate(&models.Configurations{}); err != nil {
+		return fmt.Errorf("failed to migrate Configurations schema: %w", err)
+	}
+	if err := db.AutoMigrate(&models.LastConfigurations{}); err != nil {
+		return fmt.Errorf("failed to migrate LastConfigurations schema: %w", err)
+	}
+	fmt.Println("all schemas migrated")
 
 	if withSeed {
 		seed(db)
@@ -58,21 +47,21 @@ func RunMigrations(dbPath string, withSeed bool) error {
 }
 
 func seed(db *gorm.DB) {
-	admin := User{
+	admin := models.User{
 		ID:           uuid.New(),
 		Username:     "admin",
 		PasswordHash: hashPassword("admin123"),
-		Role:         RoleAdmin,
+		Role:         models.RoleAdmin,
 	}
-	user := User{
+	user := models.User{
 		ID:           uuid.New(),
 		Username:     "user1",
 		PasswordHash: hashPassword("user123"),
-		Role:         RoleUser,
+		Role:         models.RoleUser,
 	}
 
-	db.FirstOrCreate(&admin, User{Username: admin.Username})
-	db.FirstOrCreate(&user, User{Username: user.Username})
+	db.FirstOrCreate(&admin, models.User{Username: admin.Username})
+	db.FirstOrCreate(&user, models.User{Username: user.Username})
 
 	fmt.Println("seeded admin and user1")
 }

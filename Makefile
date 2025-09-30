@@ -4,7 +4,6 @@ MIGRATE_CMD=migrate
 MIGRATIONS_DIR=./migrations
 
 .PHONY: all build run coverage tidy db-migrate db-migrate-seed db-reset sqlite-shell test lint
-
 all: build
 
 build:
@@ -14,10 +13,8 @@ run:
 	CONFIG_PATH=config/config.json air -c .air.toml
 
 coverage:
-	@pkgs="$$(go list ./internal/... | grep -v -E 'internal/(config|secrets|models|migrations)')"; \
-	go test -coverpkg=$$pkgs -coverprofile=coverage.out $$pkgs
+	go test ./... -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
-	@echo "Opening coverage.html in your browser to view the report.."
 	open coverage.html
 
 tidy:
@@ -31,9 +28,9 @@ db-migrate:
 db-migrate-seed:
 	go run cmd/migrate/main.go --seed
 
-# nuke db + fresh schema + seeds
+# nuke db + fresh schema
 db-reset:
-	go run cmd/migrate/main.go --reset --seed
+	go run cmd/migrate/main.go --reset
 
 # SQL-like shell in terminal
 sqlite-shell:
@@ -41,6 +38,6 @@ sqlite-shell:
 
 test:
 	go test -v ./internal/...
-	
+
 lint:
 	golangci-lint run ./...

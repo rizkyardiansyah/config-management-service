@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Config Management Service API
+  version: 1.0.0
+  description: >
+    API for authentication and configuration management with versioning,
+    rollback, and JSON Schema validation.
+
+servers:
+  - url: http://localhost:8089/api/v1
+
+paths:
+  /login:
+    post:
+      summary: User login
+      description: Authenticate and get access/refresh tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Tokens returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+        "400":
+          description: Invalid request
+        "401":
+          description: Invalid credentials
+
+  /configs:
+    post:
+      summary: Create new configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigurationCreate"
+      responses:
+        "201":
+          description: Config created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+        "400":
+          description: Invalid request body
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /configs/{name}:
+    put:
+      summary: Update config (creates new version)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigurationUpdate"
+      responses:
+        "201":
+          description: Config updated with new version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+        "400":
+          description: Bad request or invalid schema change
+        "401":
+          description: Unauthorized
+        "404":
+          description: Config not found
+        "500":
+          description: Internal server error
+    get:
+      summary: Get latest config by name
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Latest config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+        "404":
+          description: Not found
+
+  /configs/{name}/versions:
+    get:
+      summary: Get all versions of a config
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Configuration"
+        "500":
+          description: Internal server error
+
+  /configs/{name}/versions/{version}:
+    get:
+      summary: Get specific config version
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Config version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+        "400":
+          description: Invalid version parameter
+        "404":
+          description: Config version not found
+
+  /configs/{name}/rollback/{version}:
+    post:
+      summary: Rollback config to older version
+      description: Creates a new config version cloned from an older version.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Rollback created new version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+        "400":
+          description: Invalid version
+        "401":
+          description: Unauthorized
+        "404":
+          description: Config version not found
+        "500":
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ConfigurationCreate:
+      type: object
+      required: [name, schema, input]
+      properties:
+        name:
+          type: string
+          example: BNI_VA_DAILY_TRESHOLD
+        type:
+          type: string
+          example: object
+        schema:
+          type: string
+          description: JSON Schema (as stringified JSON)
+        input:
+          type: string
+          description: JSON input (as stringified JSON)
+    ConfigurationUpdate:
+      type: object
+      required: [schema, input]
+      properties:
+        schema:
+          type: string
+        input:
+          type: string
+    Configuration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        schema:
+          type: string
+        input:
+          type: string
+        version:
+          type: integer
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        isActive:
+          type: integer
