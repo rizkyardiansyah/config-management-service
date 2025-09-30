@@ -12,7 +12,7 @@
 bin/
 obj/
 tmp/
-data/config.db
+data/
 *.test
 
 # Code coverage profiles and other test artifacts
