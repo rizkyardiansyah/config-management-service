@@ -1,5 +1,5 @@
 {
   "Port": 8089,
-  "AccessTokenTTLInMinutes": 15,
+  "AccessTokenTTLInDays": 7,
   "RefreshTokenTTLInMinutes": 60
 }

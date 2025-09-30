@@ -35,13 +35,18 @@ curl -X POST http://localhost:8089/api/v1/login -d '{"username":"admin","passwor
 - CREATE CONFIG
   curl -X POST http://localhost:8089/api/v1/configs \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkxODc0MjEsImlhdCI6MTc1OTE4NjUyMSwicm9sZSI6ImFkbWluIiwic3ViIjoiOTA2YjBmZTctN2E3ZS00ZDg4LTk5ZWEtZjAyNzg0ODI3MTJjIn0.SYIjXB6lc_2UHGir65V49czkRTt1cNn" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkyMTMzODIsImlhdCI6MTc1OTIxMjQ4Miwicm9sZSI6ImFkbWluIiwic3ViIjoiM2ViMjc1YTctNjY5Ni00NjQxLWE0NTItNjRkNjI3ZDQ0MzM0In0.rbIIcysM3rX01oGYJTcAHZ8IbRRC3-sFbvo-YdAObtM" \
   -d '{
-    "name": "BCA_VA_DAILY_TRESHOLD",
+    "name": "BNI_VA_DAILY_TRESHOLD",
     "type": "object",
     "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"max_limit\": { \"type\": \"integer\" },\n    \"enabled\": { \"type\": \"boolean\" }\n  },\n  \"required\": [\"max_limit\", \"enabled\"]\n}",
     "input": "{\n  \"max_limit\": 100000,\n  \"enabled\": true\n}",
-    "version": 1
   }'
 
+## Automation Test
+    newman run configs_collection.json
+    sample: newman run tests/postman/configs_collection.json -e tests/postman/local_env.json
+
+## Testing Report
+    https://docs.google.com/spreadsheets/d/1oLkdPhoGm4MNiT8zLft-PdEUo_Nd9qfsib7AN9Srqgw/edit?gid=0#gid=0 
 

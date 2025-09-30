@@ -4,7 +4,6 @@ MIGRATE_CMD=migrate
 MIGRATIONS_DIR=./migrations
 
 .PHONY: all build run coverage tidy db-migrate db-migrate-seed db-reset sqlite-shell test lint
-
 all: build
 
 build:
@@ -39,6 +38,6 @@ sqlite-shell:
 
 test:
 	go test -v ./internal/...
-	
+
 lint:
 	golangci-lint run ./...

@@ -19,41 +19,76 @@ func NewConfigHandler(service ConfigService) *ConfigHandler {
 }
 
 func (h *ConfigHandler) CreateConfig(c *gin.Context) {
-	var cfg models.Configurations
+	var newCfg models.Configurations
 
-	fmt.Println("in 1")
-	if err := c.ShouldBindJSON(&cfg); err != nil {
+	if err := c.ShouldBindJSON(&newCfg); err != nil {
 		fmt.Println("Bind error:", err)
-		fmt.Println("Raw body:", cfg)
+		fmt.Println("Raw body:", newCfg)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	fmt.Println("in 2")
-
-	if !isValidInput(cfg.Schema, cfg.Input) {
+	// Reject invalid input and schema pair
+	if !isValidInput(newCfg.Schema, newCfg.Input) {
+		fmt.Println("Invalid schema input pair")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	fmt.Println("in 3")
-
-	// Assign new UUID if not provided
-	if cfg.ID == uuid.Nil {
-		cfg.ID = uuid.New()
+	// Only Admin is allowed to create config
+	roleVal, exists := c.Get("role")
+	if !exists {
+		// key not set
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "role not found"})
+		return
 	}
-
-	cfg.Version = 1
-
-	fmt.Println("in 4")
-
-	if err := h.service.Create(&cfg); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create config"})
+	role, ok := roleVal.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid role type"})
+		return
+	}
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not authorized"})
 		return
 	}
 
-	fmt.Println("in 5")
-	c.JSON(http.StatusCreated, cfg)
+	// Enforce user id validation
+	userIdVal, exists := c.Get("user_id")
+	if !exists {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+	userId, ok := userIdVal.(string)
+	if !ok {
+		fmt.Println("User is not authorized)")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+
+	existingCfg, _ := h.service.GetLastVersionByName(newCfg.Name)
+
+	// If config already exist, reject
+	if existingCfg != nil {
+		fmt.Println("config already exists, please do update instead")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "config already exists"})
+		return
+	}
+
+	// If config not exist, create new config
+	if newCfg.ID == uuid.Nil {
+		newCfg.ID = uuid.New()
+	}
+	newCfg.CreatedBy = userId
+	newCfg.Version = 1
+	newCfg.IsActive = 1
+	if err := h.service.Create(&newCfg); err != nil {
+		fmt.Println("service failed to create config")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, newCfg)
 }
 
 func (h *ConfigHandler) UpdateConfig(c *gin.Context) {

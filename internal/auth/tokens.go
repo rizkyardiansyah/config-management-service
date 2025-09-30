@@ -15,7 +15,7 @@ func createAccessToken(u models.User, cfg *config.Config, secrets *secrets.Secre
 	claims := jwt.MapClaims{
 		"sub":  u.ID,
 		"role": string(u.Role),
-		"exp":  time.Now().Add(time.Minute * time.Duration(cfg.AccessTokenTTLInMinutes)).Unix(),
+		"exp":  time.Now().Add(time.Duration(cfg.AccessTokenTTLInDays) * 24 * time.Hour).Unix(),
 		"iat":  time.Now().Unix(),
 	}
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

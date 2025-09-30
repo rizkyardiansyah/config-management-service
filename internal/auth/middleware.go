@@ -42,7 +42,7 @@ func AuthMiddleware(secs *secrets.Secrets) gin.HandlerFunc {
 			return
 		}
 
-		// put user info in context
+		// Put user info in context
 		c.Set("user_id", claims["sub"])
 		c.Set("role", claims["role"])
 		c.Next()
