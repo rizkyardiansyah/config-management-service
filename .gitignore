@@ -36,6 +36,3 @@ go.work.sum
 
 # sqlite
 *.sqlite
-
-# temp mod to remind last stable version with go 1.21
-stable_go.mod
