@@ -51,7 +51,6 @@ func main() {
 	})
 
 	// JWT-protected routes
-	// Protected group
 	api := r.Group("/api/v1")
 	api.Use(auth.AuthMiddleware(secs))
 	{

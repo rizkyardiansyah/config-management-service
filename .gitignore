@@ -12,7 +12,6 @@
 bin/
 obj/
 tmp/
-data/
 *.test
 
 # Code coverage profiles and other test artifacts
