@@ -59,9 +59,10 @@ You can run the service **locally** or via **Docker**.
    Please ensure your Docker Software runs. If it is closed, open it again.
 
 
-2. Run migrations:
+2. Run migrations inside the container:
    ```bash
-   make db-migrate-seed
+   make db-migrate-docker
+   make db-migrate-seed-docker
    ```
    This sets up schema + inserts a default admin user.
 
@@ -104,10 +105,14 @@ You can run the service **locally** or via **Docker**.
 
 ### Reset database
 
-```bash
-make db-reset
-```
-
+- Local:
+    ```bash
+    make db-reset
+    ```
+- Docker:
+    ```bash
+    make db-reset-docker
+    ```
 ### Open SQLite shell
 
 ```bash

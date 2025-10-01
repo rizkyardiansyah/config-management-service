@@ -1,37 +1,48 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
-
+# ---------- Build Stage ----------
+FROM golang:1.21-bullseye AS builder
 WORKDIR /src
 
-# Install build deps for go-sqlite3 (CGO)
-RUN apk add --no-cache build-base sqlite-dev
-
+RUN apt-get update && apt-get install -y gcc libc6-dev
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+RUN go build -o configsvc ./cmd/server
+RUN go build -o migrate ./cmd/migrate
 
-# Build with CGO enabled
-RUN CGO_ENABLED=1 GOOS=linux go build -o /server ./cmd/server
-
-# Runtime stage
-FROM alpine:3.20
-
+# ---------- Runtime Stage ----------
+FROM debian:bullseye-slim
 WORKDIR /app
 
-# runtime deps: sqlite + libc
-RUN apk add --no-cache sqlite sqlite-libs
-
-COPY --from=builder /server /server
-COPY config/config.json ./config/config.json
-
-RUN mkdir -p /data
-
-ENV APP_PORT=8089
-ENV DB_DRIVER=sqlite
-ENV DB_DSN=/data/app.db
-ENV JWT_SECRET=dev-secret
+RUN apt-get update && apt-get install -y sqlite3 libsqlite3-0 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /src/configsvc .
+COPY --from=builder /src/migrate .
+COPY --from=builder /src/migrations ./migrations
+COPY --from=builder /src/data ./data
+COPY --from=builder /src/config ./config
 
 EXPOSE 8089
+CMD ["./configsvc"]
+# ---------- Build Stage ----------
+FROM golang:1.21-bullseye AS builder
+WORKDIR /src
 
-CMD ["/server"]
+RUN apt-get update && apt-get install -y gcc libc6-dev
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN go build -o configsvc ./cmd/server
+RUN go build -o migrate ./cmd/migrate
+
+# ---------- Runtime Stage ----------
+FROM debian:bullseye-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y sqlite3 libsqlite3-0 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /src/configsvc .
+COPY --from=builder /src/migrate .
+COPY --from=builder /src/migrations ./migrations
+COPY --from=builder /src/data ./data
+COPY --from=builder /src/config ./config
+
+EXPOSE 8089
+CMD ["./configsvc"]

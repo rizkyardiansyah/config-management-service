@@ -2,7 +2,10 @@ APP_NAME = configsvc
 DB_PATH  := $(abspath ./data/config.db)
 MIGRATIONS_DIR = ./migrations
 
-.PHONY: all build run coverage tidy db-migrate db-migrate-seed db-reset sqlite-shell test lint docker-up docker-down
+.PHONY: all build run coverage tidy \
+        db-migrate db-migrate-seed db-reset \
+        db-migrate-docker db-migrate-seed-docker db-reset-docker \
+        sqlite-shell test lint docker-up docker-down
 
 all: build
 
@@ -20,6 +23,10 @@ coverage:
 tidy:
 	go mod tidy
 
+# -----------------
+# LOCAL DB commands
+# -----------------
+
 db-migrate:
 	DB_DSN=$(DB_PATH) go run cmd/migrate/main.go
 
@@ -28,6 +35,24 @@ db-migrate-seed:
 
 db-reset:
 	DB_DSN=$(DB_PATH) go run cmd/migrate/main.go --reset
+
+# -----------------
+# DOCKER DB commands
+# -----------------
+# assumes multi-stage Dockerfile builds ./migrate binary
+
+db-migrate-docker:
+	docker-compose run --rm $(APP_NAME) ./migrate
+
+db-migrate-seed-docker:
+	docker-compose run --rm $(APP_NAME) ./migrate --seed
+
+db-reset-docker:
+	docker-compose run --rm $(APP_NAME) ./migrate --reset
+
+# -----------------
+# Misc
+# -----------------
 
 sqlite-shell:
 	sqlite3 $(DB_PATH)

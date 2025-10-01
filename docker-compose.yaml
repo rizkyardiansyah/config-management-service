@@ -14,3 +14,4 @@ services:
     volumes:
       - ./data:/app/data
       - ./migrations:/app/migrations
+      - ./config:/app/config
