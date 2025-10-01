@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 
 	"sass.com/configsvc/internal/migrations"
 )
@@ -13,11 +14,12 @@ func main() {
 	seed := flag.Bool("seed", false, "insert default records after migration")
 	flag.Parse()
 
-	dbPath := "./data/config.db"
-
+	dbPath, _ := filepath.Abs("./data/config.db")
 	if *reset {
 		if err := os.Remove(dbPath); err == nil {
-			log.Println("removed old DB file")
+			log.Println("removed old DB file:", dbPath)
+		} else {
+			log.Println("failed to remove DB file:", err)
 		}
 	}
 

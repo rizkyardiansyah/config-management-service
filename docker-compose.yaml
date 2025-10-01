@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  configsvc:
+    build: .
+    container_name: configsvc
+    ports:
+      - "8089:8089"
+    environment:
+      - APP_PORT=8089
+      - DB_DRIVER=sqlite
+      - DB_DSN=/app/data/config.db
+      - JWT_SECRET=dummy-jwt-secret
+    volumes:
+      - ./data:/app/data
+      - ./migrations:/app/migrations

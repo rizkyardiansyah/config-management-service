@@ -1,7 +1,10 @@
 package configdata
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"sass.com/configsvc/internal/cache"
 	"sass.com/configsvc/internal/models"
 )
@@ -74,9 +77,12 @@ func (s *ConfigServiceImpl) GetLastVersionByName(name string) (*models.LastConfi
 		return cacheData, nil
 	}
 
-	// If not available in cache, failover to DB
 	dbData, err := s.repo.GetLastConfig(name)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// First creation just return nil, nil
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -89,7 +95,14 @@ func (s *ConfigServiceImpl) GetLastVersionByName(name string) (*models.LastConfi
 }
 
 func (s *ConfigServiceImpl) GetByNameByVersion(name string, version int) (*models.Configurations, error) {
-	return s.repo.GetByNameByVersion(name, version)
+	cfg, err := s.repo.GetByNameByVersion(name, version)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // no such version: return nil, nil
+		}
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func (s *ConfigServiceImpl) GetConfigVersions(name string) ([]models.Configurations, error) {
